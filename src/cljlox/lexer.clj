@@ -13,6 +13,8 @@
                   :type ::EQUALS-TO}
                  {:keyword "and"
                   :type ::AND}
+                 {:keyword "then"
+                  :type ::THEN}
                  {:keyword "class"
                   :type ::class}])
 (def allowed-keywords
@@ -97,15 +99,16 @@
                        ;; identifers and keywords;
                        (if (identifier-characters? ch)
                          (let [identifier (get-until #(or (digit? %1) (identifier-characters? %1)) source character-pointer)
-                               is-keyword? (some #(= (:keyword %1) identifier) (map :keyword vocabulary))
-                               keywords (map :keyword vocabulary)]
-
+                               is-keyword? (some #(= (:keyword %1) identifier) (filter :keyword vocabulary))
+                               keywords (filter :keyword vocabulary)]
                            (recur (+ character-pointer (count identifier)) [(conj tokens
                                                                                   (if is-keyword?
-                                                                                    (lex->token ::KEYWORD (get keywords identifier) character-pointer)
+                                                                                    (lex->token (->> keywords
+                                                                                                     (filter #(= (:keyword %) identifier))
+                                                                                                     (first)
+                                                                                                     (:type)) character-pointer)
                                                                                     (lex->token ::IDENTIFIER identifier character-pointer))) errors]))
                          ;; no matchinng clause
                          (recur (inc character-pointer) [tokens errors]))))))))))))
    0 [[] []]))
-(scan "hell=903 open==0hel=o3 \"ok\" 30=P87 if ifr then thenedn")
-
+(scan "hell=903 open==0hel=o3 \"ok\" 30=P87 if ifr and then thenedn")
